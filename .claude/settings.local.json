@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php artisan migrate:*)",
+      "Bash(/c/laragon/bin/php/php-8.3.16-Win32-vs16-x64/php.exe artisan route:clear:*)",
+      "Bash(/c/laragon/bin/php/php-8.3.16-Win32-vs16-x64/php.exe artisan config:clear:*)",
+      "Bash(export PATH=\"/c/laragon/bin/nodejs/node-v22:$PATH\")",
+      "Bash(npm run build:*)",
+      "Bash(/c/laragon/bin/php/php-8.3.16-Win32-vs16-x64/php.exe artisan migrate:*)"
+    ]
+  }
+}
