@@ -13,7 +13,7 @@ class RealisasiLogResource extends JsonResource
             'id'        => $this->id,
             'tanggal'   => $this->tanggal->format('Y-m-d'),
             'deskripsi' => $this->deskripsi,
-            'nominal'   => $this->nominal,
+            'nominal'   => (float) $this->nominal,
             'tipe'      => $this->tipe,
         ];
     }

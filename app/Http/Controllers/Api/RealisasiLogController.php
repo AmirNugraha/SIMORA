@@ -19,7 +19,7 @@ class RealisasiLogController extends Controller
     public function store(StoreRealisasiLogRequest $request, Komponen $komponen): JsonResponse
     {
         $validated = $request->validated();
-        $validated['nominal'] = (string) $validated['nominal'];
+        $validated['nominal'] = (float) $validated['nominal'];
 
         $log = $komponen->logs()->create([
             ...$validated,

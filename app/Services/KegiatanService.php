@@ -61,7 +61,7 @@ class KegiatanService
             $kompData = [
                 'kode_akun' => $item['kode_akun'],
                 'nama'      => $item['nama'],
-                'pagu'      => (string) $item['pagu'],
+                'pagu'      => (float) $item['pagu'],
             ];
 
             // Only update if ID is numeric and actually belongs to this kegiatan
@@ -82,8 +82,8 @@ class KegiatanService
             'kategori'      => $data['kategori'],
             'kode'          => $data['kode'],
             'kegiatan'      => $data['kegiatan'],
-            'pagu'          => (string) $data['pagu'],
-            'blokir'        => (string) ($data['blokir'] ?? 0),
+            'pagu'          => (float) $data['pagu'],
+            'blokir'        => (float) ($data['blokir'] ?? 0),
             'progres_fisik' => $data['progres_fisik'] ?? 0,
             'ket'           => $data['ket'] ?? null,
             'belanja'       => $data['belanja'],
