@@ -40,11 +40,11 @@ class BackupController extends Controller
                 'ket'           => $k->ket,
                 'belanja'       => $k->belanja,
                 'akun'          => $k->akun,
-                'sumber_dana'   => $k->sumber_dana,
                 'komponens'     => $k->komponens->map(fn ($c) => [
-                    'kode_akun' => $c->kode_akun,
-                    'nama'      => $c->nama,
-                    'pagu'      => $c->pagu,
+                    'kode_akun'   => $c->kode_akun,
+                    'nama'        => $c->nama,
+                    'pagu'        => $c->pagu,
+                    'sumber_dana' => $c->sumber_dana,
                     'logs'      => $c->logs->map(fn ($l) => [
                         'tanggal'   => $l->tanggal->format('Y-m-d'),
                         'deskripsi' => $l->deskripsi,
@@ -112,14 +112,17 @@ class BackupController extends Controller
                     'ket'           => $kData['ket'] ?? '',
                     'belanja'       => $kData['belanja'] ?? '52',
                     'akun'          => $kData['akun'] ?? '',
-                    'sumber_dana'   => $kData['sumber_dana'] ?? 'RM',
                 ]);
+
+                // Fallback: jika backup lama punya sumber_dana di level kegiatan
+                $fallbackSumberDana = $kData['sumber_dana'] ?? 'RM';
 
                 foreach ($kData['komponens'] ?? [] as $cData) {
                     $komponen = $kegiatan->komponens()->create([
-                        'kode_akun' => $cData['kode_akun'],
-                        'nama'      => $cData['nama'],
-                        'pagu'      => $cData['pagu'] ?? 0,
+                        'kode_akun'   => $cData['kode_akun'],
+                        'nama'        => $cData['nama'],
+                        'pagu'        => $cData['pagu'] ?? 0,
+                        'sumber_dana' => $cData['sumber_dana'] ?? $fallbackSumberDana,
                     ]);
 
                     foreach ($cData['logs'] ?? [] as $lData) {

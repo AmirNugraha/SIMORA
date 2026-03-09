@@ -20,7 +20,6 @@ class KegiatanResource extends JsonResource
             'ket'          => $this->ket,
             'belanja'      => $this->belanja,
             'akun'         => $this->akun,
-            'sumberDana'   => $this->sumber_dana,
             'updated'      => $this->updated_at?->format('Y-m-d H:i'),
             'komponen'     => KomponentResource::collection($this->whenLoaded('komponens')),
         ];

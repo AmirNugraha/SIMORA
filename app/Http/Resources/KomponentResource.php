@@ -13,8 +13,9 @@ class KomponentResource extends JsonResource
             'id'       => $this->id,
             'kodeAkun' => $this->kode_akun,
             'nama'     => $this->nama,
-            'pagu'     => (float) $this->pagu,
-            'logs'     => RealisasiLogResource::collection($this->whenLoaded('logs')),
+            'pagu'       => (float) $this->pagu,
+            'sumberDana' => $this->sumber_dana,
+            'logs'       => RealisasiLogResource::collection($this->whenLoaded('logs')),
         ];
     }
 }

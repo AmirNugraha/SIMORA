@@ -17,7 +17,6 @@ class Kegiatan extends Model
         'ket',
         'belanja',
         'akun',
-        'sumber_dana',
     ];
 
     protected $casts = [

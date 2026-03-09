@@ -59,9 +59,10 @@ class KegiatanService
 
         foreach ($items as $item) {
             $kompData = [
-                'kode_akun' => $item['kode_akun'],
-                'nama'      => $item['nama'],
-                'pagu'      => (float) $item['pagu'],
+                'kode_akun'   => $item['kode_akun'],
+                'nama'        => $item['nama'],
+                'pagu'        => (float) $item['pagu'],
+                'sumber_dana' => $item['sumber_dana'] ?? 'RM',
             ];
 
             // Only update if ID is numeric and actually belongs to this kegiatan
@@ -88,7 +89,6 @@ class KegiatanService
             'ket'           => $data['ket'] ?? null,
             'belanja'       => $data['belanja'],
             'akun'          => $data['akun'] ?? null,
-            'sumber_dana'   => $data['sumber_dana'],
         ];
     }
 }

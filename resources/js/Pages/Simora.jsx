@@ -16,15 +16,19 @@ import CurrencyInput from '@/Components/CurrencyInput';
 
 // --- 1. KONSTANTA GLOBAL (Di luar komponen agar stabil & hoisting aman) ---
 
-const MENU_ITEMS = [
-    { id: 'executive', icon: LayoutDashboard, label: 'Dashboard' },
-    { id: 'capaian_target', icon: Target, label: 'Capaian Target' },
-    { id: 'history', icon: History, label: 'Riwayat Global' },
-    { id: 'tata_usaha', icon: BookOpen, label: 'Tata Usaha', isBidang: true },
-    { id: 'pevdas', icon: Mountain, label: 'PEVDAS', isBidang: true },
-    { id: 'rhl', icon: Trees, label: 'RHL', isBidang: true },
-    { id: 'pkdas', icon: Sprout, label: 'PKDAS', isBidang: true },
+const SIDEBAR_GROUPS = [
+    { key: 'bidang', label: 'Bidang Teknis', icon: Layers, items: [
+        { id: 'tata_usaha', icon: BookOpen, label: 'Tata Usaha' },
+        { id: 'pevdas', icon: Mountain, label: 'PEVDAS' },
+        { id: 'rhl', icon: Trees, label: 'RHL' },
+        { id: 'pkdas', icon: Sprout, label: 'PKDAS' },
+    ]},
+    { key: 'monitoring', label: 'Monitoring', icon: BarChart3, items: [
+        { id: 'capaian_target', icon: Target, label: 'Capaian Target' },
+        { id: 'history', icon: History, label: 'Riwayat Global' },
+    ]},
 ];
+const ALL_MENU_ITEMS = SIDEBAR_GROUPS.flatMap(g => g.items);
 
 const MONTH_NAMES = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 
@@ -68,6 +72,10 @@ const App = ({ initialActivities = [], initialPerformance = [], auth }) => {
 
     const [notification, setNotification] = useState({ show: false, message: '', type: 'success' });
 
+    // Sidebar collapsible groups
+    const [openMenus, setOpenMenus] = useState({ bidang: true, monitoring: false, utilitas: false });
+    const toggleMenu = (key) => setOpenMenus(prev => ({ ...prev, [key]: !prev[key] }));
+
     // Filters State
     const [overviewMonth, setOverviewMonth] = useState(new Date().getMonth());
     const [overviewYear, setOverviewYear] = useState(new Date().getFullYear());
@@ -109,7 +117,7 @@ const App = ({ initialActivities = [], initialPerformance = [], auth }) => {
 
     // Input Forms
     const [formData, setFormData] = useState({
-        kategori: 'Tata Usaha', kode: '', kegiatan: '', pagu: 0, blokir: 0, ket: '', belanja: '51', akun: '', sumberDana: 'RM',
+        kategori: 'Tata Usaha', kode: '', kegiatan: '', pagu: 0, blokir: 0, ket: '', belanja: '51', akun: '',
         komponen: []
     });
 
@@ -294,7 +302,7 @@ const App = ({ initialActivities = [], initialPerformance = [], auth }) => {
         if (!detailFilter) return [];
         const relevantActivities = activities.filter(a => {
             if (detailFilter.type === 'kategori') return a.kategori === detailFilter.value;
-            if (detailFilter.type === 'sumberDana') return a.sumberDana === detailFilter.value;
+            if (detailFilter.type === 'sumberDana') return (a.komponen || []).some(k => k.sumberDana === detailFilter.value);
             if (detailFilter.type === 'belanja') return a.belanja.includes(detailFilter.value);
             if (detailFilter.type === 'all') return true;
             return false;
@@ -327,9 +335,28 @@ const App = ({ initialActivities = [], initialPerformance = [], auth }) => {
         const totalBlokir = activities.reduce((acc, c) => acc + Number(c.blokir), 0);
         const sumberDanaList = ['RM', 'PNP'];
         const sumberDanaStats = sumberDanaList.map(sd => {
-            const sdData = activities.filter(a => a.sumberDana === sd);
-            const pagu = sdData.reduce((acc, c) => acc + c.pagu, 0);
-            const realisasi = sdData.reduce((acc, c) => acc + calculateRealisasiSmart(c, overviewMonth, overviewYear, isCumulative), 0);
+            let pagu = 0;
+            let realisasi = 0;
+            activities.forEach(act => {
+                (act.komponen || []).forEach(comp => {
+                    if (comp.sumberDana === sd) {
+                        pagu += Number(comp.pagu) || 0;
+                        const compReal = (comp.logs || []).reduce((acc, log) => {
+                            if (log.tipe !== 'Realisasi') return acc;
+                            const d = new Date(log.tanggal);
+                            const val = Number(log.nominal) || 0;
+                            if (isCumulative) {
+                                if (d.getFullYear() === overviewYear && d.getMonth() <= overviewMonth) return acc + val;
+                                if (d.getFullYear() < overviewYear) return acc + val;
+                            } else {
+                                if (d.getMonth() === overviewMonth && d.getFullYear() === overviewYear) return acc + val;
+                            }
+                            return acc;
+                        }, 0);
+                        realisasi += compReal;
+                    }
+                });
+            });
             return { name: sd, pagu, realisasi, percent: pagu > 0 ? (realisasi / pagu) * 100 : 0 };
         });
         const belanjaList = ['51', '52', '53'];
@@ -354,7 +381,7 @@ const App = ({ initialActivities = [], initialPerformance = [], auth }) => {
             if (reportBidang === 'TU') actualBidang = 'Tata Usaha';
             if (reportBidang === 'PEVDAS') actualBidang = 'PEV';
             if (reportBidang !== 'Semua' && a.kategori !== actualBidang) return false;
-            if (reportSumberDana !== 'Semua' && a.sumberDana !== reportSumberDana) return false;
+            if (reportSumberDana !== 'Semua' && !(a.komponen || []).some(k => k.sumberDana === reportSumberDana)) return false;
             if (reportBelanja !== 'Semua' && a.belanja !== reportBelanja) return false;
             return true;
         });
@@ -389,6 +416,17 @@ const App = ({ initialActivities = [], initialPerformance = [], auth }) => {
     useEffect(() => {
         setLastSaved(new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }));
     }, [activities]);
+
+    // Auto-expand sidebar group when view changes to a child item
+    useEffect(() => {
+        for (const group of SIDEBAR_GROUPS) {
+            if (group.items.some(item => item.id === view)) {
+                setOpenMenus(prev => ({ ...prev, [group.key]: true }));
+                break;
+            }
+        }
+        if (view === 'manage_users') setOpenMenus(prev => ({ ...prev, utilitas: true }));
+    }, [view]);
 
     // Sequential Library Loading to prevent race conditions & Ensure global objects
     useEffect(() => {
@@ -558,16 +596,16 @@ const App = ({ initialActivities = [], initialPerformance = [], auth }) => {
             ket:           formData.ket,
             belanja:       formData.belanja,
             akun:          formData.akun,
-            sumber_dana:   formData.sumberDana,
             komponen: (formData.komponen ?? []).map(k => {
                 // DB auto-increment IDs are small integers; Date.now() IDs are 13+ digits.
                 // Only send 'id' for real DB records to avoid 'exists' validation failure.
                 const isDbRecord = Number.isInteger(k.id) && k.id > 0 && k.id < 2_000_000_000;
                 return {
                     ...(isDbRecord ? { id: k.id } : {}),
-                    kode_akun: k.kodeAkun,
-                    nama:      k.nama,
-                    pagu:      Number(k.pagu) || 0,
+                    kode_akun:   k.kodeAkun,
+                    nama:        k.nama,
+                    pagu:        Number(k.pagu) || 0,
+                    sumber_dana: k.sumberDana || 'RM',
                 };
             }),
         };
@@ -733,11 +771,11 @@ const App = ({ initialActivities = [], initialPerformance = [], auth }) => {
 
     const openAddModal = (category) => {
         setEditingItem(null);
-        setFormData({ kategori: category, kode: '', kegiatan: '', pagu: 0, blokir: 0, ket: '', belanja: '51', akun: '', sumberDana: 'RM', komponen: [] });
+        setFormData({ kategori: category, kode: '', kegiatan: '', pagu: 0, blokir: 0, ket: '', belanja: '51', akun: '', komponen: [] });
         setIsModalOpen(true);
     };
 
-    const addKomponenRow = () => { setFormData({ ...formData, komponen: [...(formData.komponen || []), { id: `new_${Date.now()}`, kodeAkun: '', nama: '', pagu: 0, logs: [] }] }); };
+    const addKomponenRow = () => { setFormData({ ...formData, komponen: [...(formData.komponen || []), { id: `new_${Date.now()}`, kodeAkun: '', nama: '', pagu: 0, sumberDana: 'RM', logs: [] }] }); };
     const removeKomponenRow = (id) => { setFormData({ ...formData, komponen: formData.komponen.filter(k => k.id !== id) }); };
     const updateKomponenRow = (id, field, value) => {
         const updated = formData.komponen.map(k => k.id === id ? { ...k, [field]: value } : k);
@@ -930,7 +968,7 @@ const App = ({ initialActivities = [], initialPerformance = [], auth }) => {
         if (view === 'capaian_target') return 'Capaian Target';
         if (view === 'history') return 'Riwayat Aktivitas';
         if (view === 'manage_users') return 'Kelola User';
-        const menu = MENU_ITEMS.find(m => m.id === view);
+        const menu = ALL_MENU_ITEMS.find(m => m.id === view);
         return menu ? `Bidang ${menu.label}` : 'SIMORA';
     }, [view]);
 
@@ -979,19 +1017,59 @@ const App = ({ initialActivities = [], initialPerformance = [], auth }) => {
                         <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg shadow-cyan-200 overflow-hidden"><LogoKLHK size={48} /></div>
                         <div className="hidden lg:block ml-4"><h1 className="font-bold text-xl leading-none tracking-tight text-slate-900">SIMORA</h1><span className="text-sm font-bold text-cyan-600 uppercase tracking-widest mt-1 block">BPDAS Barito</span></div>
                     </div>
-                    <div className="p-6 space-y-3 mt-4">
-                        <p className="hidden lg:block px-4 text-sm font-bold text-slate-500 uppercase tracking-widest mb-4">Menu Utama</p>
-                        {MENU_ITEMS.filter(m => !m.isBidang).map(menu => (<button key={menu.id} onClick={() => setView(menu.id)} className={`w-full flex items-center p-4 rounded-2xl transition-all duration-200 group ${view === menu.id ? 'bg-cyan-50 text-cyan-700 shadow-sm' : 'text-slate-500 hover:bg-sky-50'}`}><menu.icon size={24} className={`transition-colors ${view === menu.id ? 'stroke-[2.5px]' : ''}`} /><span className="hidden lg:block ml-4 font-bold text-base">{menu.label}</span></button>))}
-                        <p className="hidden lg:block px-4 text-sm font-bold text-slate-500 uppercase tracking-widest mt-8 mb-4">Bidang Teknis</p>
-                        {MENU_ITEMS.filter(m => m.isBidang).map(menu => (<button key={menu.id} onClick={() => setView(menu.id)} className={`w-full flex items-center p-4 rounded-2xl transition-all duration-200 group ${view === menu.id ? 'bg-cyan-50 text-cyan-700 shadow-sm' : 'text-slate-500 hover:bg-sky-50'}`}><menu.icon size={24} className={`transition-colors ${view === menu.id ? 'stroke-[2.5px]' : ''}`} /><span className="hidden lg:block ml-4 font-bold text-base">{menu.label}</span></button>))}
+                    <div className="p-6 space-y-1 mt-2">
+                        {/* Dashboard — top-level */}
+                        <button onClick={() => setView('executive')} className={`w-full flex items-center p-4 rounded-2xl transition-all duration-200 group ${view === 'executive' ? 'bg-cyan-50 text-cyan-700 shadow-sm' : 'text-slate-500 hover:bg-sky-50'}`}>
+                            <LayoutDashboard size={24} className={`transition-colors ${view === 'executive' ? 'stroke-[2.5px]' : ''}`} />
+                            <span className="hidden lg:block ml-4 font-bold text-base">Dashboard</span>
+                        </button>
+
+                        {/* Collapsible Groups */}
+                        {SIDEBAR_GROUPS.map(group => {
+                            const isGroupActive = group.items.some(item => item.id === view);
+                            const isOpen = openMenus[group.key];
+                            return (
+                                <div key={group.key} className="mt-1">
+                                    <button onClick={() => toggleMenu(group.key)} className={`w-full flex items-center p-4 rounded-2xl transition-all duration-200 group ${isGroupActive ? 'text-cyan-700' : 'text-slate-500 hover:bg-sky-50'}`}>
+                                        <group.icon size={24} className={isGroupActive ? 'stroke-[2.5px]' : ''} />
+                                        <span className="hidden lg:flex ml-4 font-bold text-base flex-1 items-center justify-between">
+                                            {group.label}
+                                            {isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                                        </span>
+                                    </button>
+                                    <div className={`overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
+                                        <div className="lg:pl-4 space-y-0.5 py-1">
+                                            {group.items.map(menu => (
+                                                <button key={menu.id} onClick={() => setView(menu.id)} className={`w-full flex items-center p-3 lg:p-3 rounded-2xl transition-all duration-200 group ${view === menu.id ? 'bg-cyan-50 text-cyan-700 shadow-sm' : 'text-slate-500 hover:bg-sky-50'}`}>
+                                                    <menu.icon size={20} className={`transition-colors ${view === menu.id ? 'stroke-[2.5px]' : ''}`} />
+                                                    <span className="hidden lg:block ml-3 font-semibold text-sm">{menu.label}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
-                <div className="p-6 border-t border-cyan-100 space-y-3 shrink-0">
-                    <p className="hidden lg:block px-4 text-sm font-bold text-slate-500 uppercase tracking-widest mb-1">Utilitas</p>
-                    <button onClick={() => setIsReportOpen(true)} className="w-full flex items-center p-4 rounded-2xl text-slate-500 hover:bg-sky-50 hover:text-blue-900 transition-all duration-200"><Printer size={24} /><span className="hidden lg:block ml-4 font-bold text-base">Cetak Laporan</span></button>
-                    {canWrite && (<button onClick={handleBackupDatabase} className="w-full flex items-center p-4 rounded-2xl text-slate-500 hover:bg-sky-50 hover:text-emerald-600 transition-all duration-200"><DownloadCloud size={24} /><span className="hidden lg:block ml-4 font-bold text-base">Backup Database</span></button>)}
-                    {canWrite && (<button onClick={() => restoreInputRef.current.click()} className="w-full flex items-center p-4 rounded-2xl text-slate-500 hover:bg-sky-50 hover:text-amber-600 transition-all duration-200"><UploadCloud size={24} /><span className="hidden lg:block ml-4 font-bold text-base">Restore Database</span></button>)}
-                    {isAdmin && (<button onClick={() => { setView('manage_users'); loadUsers(); }} className={`w-full flex items-center p-4 rounded-2xl transition-all duration-200 ${view === 'manage_users' ? 'bg-cyan-50 text-cyan-700 shadow-sm' : 'text-slate-500 hover:bg-sky-50 hover:text-violet-600'}`}><Users size={24} /><span className="hidden lg:block ml-4 font-bold text-base">Kelola User</span></button>)}
+
+                {/* Utilitas — collapsible */}
+                <div className="p-6 border-t border-cyan-100 space-y-1 shrink-0">
+                    <button onClick={() => toggleMenu('utilitas')} className={`w-full flex items-center p-4 rounded-2xl transition-all duration-200 ${view === 'manage_users' ? 'text-cyan-700' : 'text-slate-500 hover:bg-sky-50'}`}>
+                        <Briefcase size={24} className={view === 'manage_users' ? 'stroke-[2.5px]' : ''} />
+                        <span className="hidden lg:flex ml-4 font-bold text-base flex-1 items-center justify-between">
+                            Utilitas
+                            {openMenus.utilitas ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                        </span>
+                    </button>
+                    <div className={`overflow-hidden transition-all duration-300 ${openMenus.utilitas ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
+                        <div className="lg:pl-4 space-y-0.5 py-1">
+                            <button onClick={() => setIsReportOpen(true)} className="w-full flex items-center p-3 rounded-2xl text-slate-500 hover:bg-sky-50 hover:text-blue-900 transition-all duration-200"><Printer size={20} /><span className="hidden lg:block ml-3 font-semibold text-sm">Cetak Laporan</span></button>
+                            {canWrite && (<button onClick={handleBackupDatabase} className="w-full flex items-center p-3 rounded-2xl text-slate-500 hover:bg-sky-50 hover:text-emerald-600 transition-all duration-200"><DownloadCloud size={20} /><span className="hidden lg:block ml-3 font-semibold text-sm">Backup Database</span></button>)}
+                            {canWrite && (<button onClick={() => restoreInputRef.current.click()} className="w-full flex items-center p-3 rounded-2xl text-slate-500 hover:bg-sky-50 hover:text-amber-600 transition-all duration-200"><UploadCloud size={20} /><span className="hidden lg:block ml-3 font-semibold text-sm">Restore Database</span></button>)}
+                            {isAdmin && (<button onClick={() => { setView('manage_users'); loadUsers(); }} className={`w-full flex items-center p-3 rounded-2xl transition-all duration-200 ${view === 'manage_users' ? 'bg-cyan-50 text-cyan-700 shadow-sm' : 'text-slate-500 hover:bg-sky-50 hover:text-violet-600'}`}><Users size={20} /><span className="hidden lg:block ml-3 font-semibold text-sm">Kelola User</span></button>)}
+                        </div>
+                    </div>
                 </div>
 
                 {/* Auth Section */}
@@ -1030,7 +1108,7 @@ const App = ({ initialActivities = [], initialPerformance = [], auth }) => {
             {/* MAIN CONTENT */}
             <main className="flex-1 h-full overflow-y-auto overflow-x-hidden relative">
                 <header className="sticky top-0 z-30 bg-sky-50/90 backdrop-blur-md px-10 py-8 flex justify-between items-center no-print border-b border-cyan-100">
-                    <div><h2 className="text-3xl font-black text-slate-900 tracking-tight">{view === 'executive' ? 'Overview Eksekutif' : view === 'capaian_target' ? 'Capaian Target' : view === 'history' ? 'Riwayat Aktivitas' : view === 'manage_users' ? 'Kelola User' : `Bidang ${MENU_ITEMS.find(m => m.id === view)?.label}`}</h2><div className="flex items-center gap-3 mt-2"><span className="w-2.5 h-2.5 rounded-full bg-cyan-500 shadow-cyan-200 shadow-md"></span><p className="text-base text-slate-600 font-medium">Terakhir diperbarui: {lastSaved}</p></div></div>
+                    <div><h2 className="text-3xl font-black text-slate-900 tracking-tight">{view === 'executive' ? 'Overview Eksekutif' : view === 'capaian_target' ? 'Capaian Target' : view === 'history' ? 'Riwayat Aktivitas' : view === 'manage_users' ? 'Kelola User' : `Bidang ${ALL_MENU_ITEMS.find(m => m.id === view)?.label}`}</h2><div className="flex items-center gap-3 mt-2"><span className="w-2.5 h-2.5 rounded-full bg-cyan-500 shadow-cyan-200 shadow-md"></span><p className="text-base text-slate-600 font-medium">Terakhir diperbarui: {lastSaved}</p></div></div>
                     <div className="flex gap-4">
                         {view !== 'executive' && (<button onClick={() => setIsReportOpen(true)} className="flex items-center gap-2 bg-white border border-cyan-200 text-slate-700 px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-sky-50 transition-all shadow-sm active:scale-95"><Printer size={20} /><span className="hidden sm:inline">Laporan</span></button>)}
                         {view === 'executive' && (<div className="flex items-center gap-3 bg-white p-2 rounded-2xl border border-cyan-200 shadow-sm"><div className="flex gap-2"><select className="bg-sky-50 text-sm font-bold text-slate-700 outline-none cursor-pointer hover:bg-sky-100 transition-colors py-2 px-3 rounded-xl border border-transparent hover:border-cyan-200" value={overviewMonth} onChange={(e) => setOverviewMonth(Number(e.target.value))}>{MONTH_NAMES.map((m, i) => <option key={i} value={i}>{m}</option>)}</select><select className="bg-sky-50 text-sm font-bold text-slate-700 outline-none cursor-pointer hover:bg-sky-100 transition-colors py-2 px-3 rounded-xl border border-transparent hover:border-cyan-200" value={overviewYear} onChange={(e) => setOverviewYear(Number(e.target.value))}>{[2025, 2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}</select></div><div className="h-6 w-[1px] bg-slate-200" /><button onClick={() => setIsCumulative(!isCumulative)} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${isCumulative ? 'bg-blue-600 text-white shadow-md' : 'bg-sky-100 text-slate-500 hover:bg-sky-200'}`}><BarChart4 size={14} />{isCumulative ? 'Akumulasi' : 'Bulanan'}</button></div>)}
@@ -1590,19 +1668,11 @@ const App = ({ initialActivities = [], initialPerformance = [], auth }) => {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-3 gap-6">
-                                    <div className="col-span-1 space-y-2">
-                                        <label className="text-sm font-bold text-slate-500 uppercase tracking-wider">Kategori Belanja</label>
-                                        <select className="w-full bg-sky-50 border border-cyan-100 rounded-2xl px-4 py-3 text-base font-bold outline-none focus:ring-4 focus:ring-cyan-500/10" value={formData.belanja} onChange={e => setFormData({ ...formData, belanja: e.target.value })}>
-                                            {['51', '52', '53'].map(c => <option key={c} value={c}>{c}</option>)}
-                                        </select>
-                                    </div>
-                                    <div className="col-span-2 space-y-2">
-                                        <label className="text-sm font-bold text-slate-500 uppercase tracking-wider">Sumber Dana</label>
-                                        <select className="w-full bg-sky-50 border border-cyan-100 rounded-2xl px-4 py-3 text-base font-bold outline-none focus:ring-4 focus:ring-cyan-500/10" value={formData.sumberDana} onChange={e => setFormData({ ...formData, sumberDana: e.target.value })}>
-                                            {['RM', 'PNP'].map(c => <option key={c} value={c}>{c}</option>)}
-                                        </select>
-                                    </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-slate-500 uppercase tracking-wider">Kategori Belanja</label>
+                                    <select className="w-full bg-sky-50 border border-cyan-100 rounded-2xl px-4 py-3 text-base font-bold outline-none focus:ring-4 focus:ring-cyan-500/10" value={formData.belanja} onChange={e => setFormData({ ...formData, belanja: e.target.value })}>
+                                        {['51', '52', '53'].map(c => <option key={c} value={c}>{c}</option>)}
+                                    </select>
                                 </div>
 
                                 <div className="space-y-2">
@@ -1620,7 +1690,8 @@ const App = ({ initialActivities = [], initialPerformance = [], auth }) => {
                                     {formData.komponen && formData.komponen.length > 0 && (
                                         <div className="grid grid-cols-12 gap-3 mb-2 px-3 text-xs font-bold text-slate-500 uppercase tracking-wider">
                                             <div className="col-span-2">Kode Akun</div>
-                                            <div className="col-span-4">Nama Komponen</div>
+                                            <div className="col-span-3">Nama Komponen</div>
+                                            <div className="col-span-1">Sumber Dana</div>
                                             <div className="col-span-3 text-right">Pagu Komponen</div>
                                             <div className="col-span-3 text-right pr-8">Realisasi (Otomatis)</div>
                                         </div>
@@ -1637,8 +1708,13 @@ const App = ({ initialActivities = [], initialPerformance = [], auth }) => {
                                                         <div className="col-span-2">
                                                             <input type="text" placeholder="521111" className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold text-slate-600 focus:border-cyan-400 outline-none" value={k.kodeAkun} onChange={(e) => updateKomponenRow(k.id, 'kodeAkun', e.target.value)} required />
                                                         </div>
-                                                        <div className="col-span-4">
+                                                        <div className="col-span-3">
                                                             <input type="text" placeholder="Nama Komponen / Rincian" className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-medium focus:border-cyan-400 outline-none" value={k.nama} onChange={(e) => updateKomponenRow(k.id, 'nama', e.target.value)} required />
+                                                        </div>
+                                                        <div className="col-span-1">
+                                                            <select className="w-full bg-white border border-slate-200 rounded-xl px-1 py-2 text-sm font-bold text-slate-600 focus:border-cyan-400 outline-none" value={k.sumberDana || 'RM'} onChange={(e) => updateKomponenRow(k.id, 'sumberDana', e.target.value)}>
+                                                                {['RM', 'PNP'].map(c => <option key={c} value={c}>{c}</option>)}
+                                                            </select>
                                                         </div>
                                                         <div className="col-span-3">
                                                             <CurrencyInput placeholder="0" className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold text-right focus:border-cyan-400 outline-none" value={k.pagu} onChange={(val) => updateKomponenRow(k.id, 'pagu', val)} required />

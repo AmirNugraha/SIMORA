@@ -13,6 +13,7 @@ class Komponen extends Model
         'kode_akun',
         'nama',
         'pagu',
+        'sumber_dana',
     ];
 
     protected $casts = [];

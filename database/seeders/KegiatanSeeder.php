@@ -24,12 +24,12 @@ class KegiatanSeeder extends Seeder
                 'ket'           => 'Rutin Bulanan',
                 'belanja'       => '51',
                 'akun'          => '511111',
-                'sumber_dana'   => 'RM',
                 'komponen'      => [
                     [
                         'kode_akun' => '511111',
                         'nama'      => 'Gaji Pokok PNS',
                         'pagu'      => 4500000000,
+                        'sumber_dana' => 'RM',
                         'logs'      => [
                             ['tanggal' => '2026-01-05', 'deskripsi' => 'Pembayaran Gaji Induk Januari 2026', 'nominal' => 450000000, 'tipe' => 'Realisasi'],
                             ['tanggal' => '2026-02-01', 'deskripsi' => 'Pembayaran Gaji Induk Februari 2026', 'nominal' => 450000000, 'tipe' => 'Realisasi'],
@@ -39,6 +39,7 @@ class KegiatanSeeder extends Seeder
                         'kode_akun' => '512211',
                         'nama'      => 'Tunjangan Kinerja',
                         'pagu'      => 2000000000,
+                        'sumber_dana' => 'RM',
                         'logs'      => [
                             ['tanggal' => '2026-01-15', 'deskripsi' => 'Tukin Januari 2026', 'nominal' => 200000000, 'tipe' => 'Realisasi'],
                         ],
@@ -47,6 +48,7 @@ class KegiatanSeeder extends Seeder
                         'kode_akun' => '511129',
                         'nama'      => 'Tunjangan Makan',
                         'pagu'      => 876566000,
+                        'sumber_dana' => 'RM',
                         'logs'      => [],
                     ],
                 ],
@@ -61,12 +63,12 @@ class KegiatanSeeder extends Seeder
                 'ket'           => 'Kebutuhan Dasar',
                 'belanja'       => '52',
                 'akun'          => '521111',
-                'sumber_dana'   => 'RM',
                 'komponen'      => [
                     [
                         'kode_akun' => '521111',
                         'nama'      => 'Keperluan Sehari-hari Perkantoran',
                         'pagu'      => 10000000,
+                        'sumber_dana' => 'RM',
                         'logs'      => [
                             ['tanggal' => '2026-01-10', 'deskripsi' => 'Pembelian ATK dan Kertas HVS', 'nominal' => 2500000, 'tipe' => 'Realisasi'],
                             ['tanggal' => '2026-01-25', 'deskripsi' => 'Konsumsi Rapat Bulanan', 'nominal' => 750000, 'tipe' => 'Realisasi'],
@@ -76,6 +78,7 @@ class KegiatanSeeder extends Seeder
                         'kode_akun' => '521111',
                         'nama'      => 'Langganan Surat Kabar',
                         'pagu'      => 5000000,
+                        'sumber_dana' => 'RM',
                         'logs'      => [],
                     ],
                 ],
@@ -90,12 +93,12 @@ class KegiatanSeeder extends Seeder
                 'ket'           => '55 Unit',
                 'belanja'       => '52',
                 'akun'          => '524111',
-                'sumber_dana'   => 'RM',
                 'komponen'      => [
                     [
                         'kode_akun' => '524111',
                         'nama'      => 'Survey dan Identifikasi Lokasi',
                         'pagu'      => 25000000,
+                        'sumber_dana' => 'RM',
                         'logs'      => [
                             ['tanggal' => '2026-01-15', 'deskripsi' => 'Survei lapangan awal lokasi KTA', 'nominal' => 0, 'tipe' => 'Catatan'],
                             ['tanggal' => '2026-01-18', 'deskripsi' => 'Perjalanan dinas tim teknis ke Hulu Sungai', 'nominal' => 4500000, 'tipe' => 'Realisasi'],
@@ -105,6 +108,7 @@ class KegiatanSeeder extends Seeder
                         'kode_akun' => '522141',
                         'nama'      => 'Penyusunan Laporan Rancangan',
                         'pagu'      => 32500000,
+                        'sumber_dana' => 'RM',
                         'logs'      => [],
                     ],
                 ],
@@ -119,12 +123,12 @@ class KegiatanSeeder extends Seeder
                 'ket'           => 'Fisik Sipil',
                 'belanja'       => '53',
                 'akun'          => '532111',
-                'sumber_dana'   => 'RM',
                 'komponen'      => [
                     [
                         'kode_akun' => '532111',
                         'nama'      => 'Pengadaan Bahan (Batu, Semen, Kawat)',
                         'pagu'      => 600000000,
+                        'sumber_dana' => 'RM',
                         'logs'      => [
                             ['tanggal' => '2026-02-01', 'deskripsi' => 'Pembelian Material Batu dan Semen (Termin 1)', 'nominal' => 45000000, 'tipe' => 'Realisasi'],
                         ],
@@ -133,6 +137,7 @@ class KegiatanSeeder extends Seeder
                         'kode_akun' => '521213',
                         'nama'      => 'Upah Tenaga Kerja (HOK)',
                         'pagu'      => 281820000,
+                        'sumber_dana' => 'RM',
                         'logs'      => [
                             ['tanggal' => '2026-02-05', 'deskripsi' => 'Upah HOK Tukang (Minggu 1)', 'nominal' => 12000000, 'tipe' => 'Realisasi'],
                         ],
@@ -149,12 +154,12 @@ class KegiatanSeeder extends Seeder
                 'ket'           => '600rb Btg',
                 'belanja'       => '52',
                 'akun'          => '521211',
-                'sumber_dana'   => 'RM',
                 'komponen'      => [
                     [
                         'kode_akun' => '521811',
                         'nama'      => 'Pengadaan Media Tanam',
                         'pagu'      => 400000000,
+                        'sumber_dana' => 'RM',
                         'logs'      => [
                             ['tanggal' => '2026-01-08', 'deskripsi' => 'Pembelian media tanam (top soil)', 'nominal' => 75000000, 'tipe' => 'Realisasi'],
                             ['tanggal' => '2026-01-28', 'deskripsi' => 'Pembelian Polybag ukuran 10x15', 'nominal' => 18000000, 'tipe' => 'Realisasi'],
@@ -164,6 +169,7 @@ class KegiatanSeeder extends Seeder
                         'kode_akun' => '521811',
                         'nama'      => 'Pengadaan Benih/Biji',
                         'pagu'      => 200000000,
+                        'sumber_dana' => 'RM',
                         'logs'      => [],
                     ],
                 ],
