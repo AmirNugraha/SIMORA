@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ArsipPageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SiioraController;
 use Illuminate\Support\Facades\Route;
@@ -9,6 +10,8 @@ Route::get('/', [SiioraController::class, 'index']);
 Route::get('/dashboard', function () {
     return inertia('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::get('/arsip', [ArsipPageController::class, 'index'])->middleware('auth')->name('arsip');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

@@ -9,7 +9,7 @@ import {
     Database, RefreshCw, BarChart4, CreditCard, Banknote, Upload, Tags, Briefcase,
     TrendingDown, Percent, ListFilter, ArrowLeft, FileDown, FileSpreadsheet, Check,
     BookOpen, Mountain, Trees, Sprout, DownloadCloud, UploadCloud, FilePlus, List, AlertTriangle, Lightbulb, Goal, CalendarRange,
-    LogIn, LogOut, UserCircle, Users, Shield, Eye, EyeOff
+    LogIn, LogOut, UserCircle, Users, Shield, Eye, EyeOff, Archive
 } from 'lucide-react';
 import LogoKLHK from '@/Components/LogoKLHK';
 import CurrencyInput from '@/Components/CurrencyInput';
@@ -1051,6 +1051,14 @@ const App = ({ initialActivities = [], initialPerformance = [], auth }) => {
                             );
                         })}
                     </div>
+                </div>
+
+                {/* Arsip Digital — external link */}
+                <div className="px-6 pb-2">
+                    <a href="/arsip" className="w-full flex items-center p-3 rounded-2xl text-slate-500 hover:bg-sky-50 hover:text-indigo-700 transition-all duration-200">
+                        <Archive size={22} />
+                        <span className="hidden lg:block ml-3 font-semibold text-sm">Arsip Digital</span>
+                    </a>
                 </div>
 
                 {/* Utilitas — collapsible */}
